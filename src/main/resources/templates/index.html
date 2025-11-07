@@ -4,29 +4,331 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
-    <title>生成工具</title>
-
-    <!-- Bootstrap -->
+    <title>ID生成工具</title>
     <link rel="stylesheet" th:href="@{/css/bootstrap.min.css}">
+    <style>
+        .mode-section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            display: none;
+        }
+        .mode-section.active {
+            display: block;
+        }
+        .result-area {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 8px;
+            margin: 3px 0;
+            background-color: white;
+            border-radius: 2px;
+            display: flex;
+            align-items: center;
+            cursor: text;
+        }
+        .result-item:hover {
+            background-color: #e8f4f8;
+        }
+        .result-index {
+            color: #999;
+            margin-right: 10px;
+            min-width: 30px;
+            font-size: 12px;
+        }
+        .result-id {
+            flex: 1;
+            font-family: monospace;
+            user-select: all;
+        }
+        .copy-btn {
+            margin-left: 10px;
+            padding: 2px 8px;
+            font-size: 12px;
+        }
+        .copy-all-btn {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
+<div class="container" style="margin-top: 30px;">
+    <div class="page-header">
+        <h1>ID生成工具 <small>支持多种生成模式</small></h1>
+    </div>
 
-<div class="row">
-    <form action="/number" class="form-horizontal" method="get">
-        <div class="col-lg-6">
-            <div class="input-group">
-      <span class="input-group-btn">
-        <button  type="submit" class="btn btn-default" >重新生成</button>
-      </span>
-                <input th:value="${id}" class="form-control" placeholder="点击重新生成进行更新">
-            </div><!-- /input-group -->
-        </div><!-- /.col-lg-6 -->
-    </form>
+    <!-- 模式选择 -->
+    <div class="form-group">
+        <label for="modeSelect">选择生成模式：</label>
+        <select id="modeSelect" class="form-control" style="max-width: 300px;">
+            <option value="incremental">模式1：递增ID生成（基于起始ID累计增加）</option>
+            <option value="random">模式2：随机ID生成（指定长度和个数）</option>
+            <option value="common">模式3：常见ID生成（UUID、雪花算法等）</option>
+        </select>
+    </div>
 
-</div><!-- /.row -->
+    <!-- 模式1：递增ID生成 -->
+    <div id="incrementalMode" class="mode-section">
+        <h3>递增ID生成</h3>
+        <form id="incrementalForm" class="form-horizontal">
+            <div class="form-group">
+                <label for="startId" class="col-sm-2 control-label">起始ID：</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control" id="startId" placeholder="请输入起始ID" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="incrementalCount" class="col-sm-2 control-label">生成数量：</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control" id="incrementalCount" placeholder="请输入生成数量" value="10" min="1" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-4">
+                    <button type="submit" class="btn btn-primary">生成</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 模式2：随机ID生成 -->
+    <div id="randomMode" class="mode-section">
+        <h3>随机ID生成</h3>
+        <form id="randomForm" class="form-horizontal">
+            <div class="form-group">
+                <label for="length" class="col-sm-2 control-label">ID长度：</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control" id="length" placeholder="请输入ID长度" value="10" min="1" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="randomCount" class="col-sm-2 control-label">生成数量：</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control" id="randomCount" placeholder="请输入生成数量" value="10" min="1" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="randomType" class="col-sm-2 control-label">字符类型：</label>
+                <div class="col-sm-4">
+                    <select id="randomType" class="form-control">
+                        <option value="alphanumeric">字母+数字</option>
+                        <option value="numeric">仅数字</option>
+                        <option value="alphabetic">仅字母</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-4">
+                    <button type="submit" class="btn btn-primary">生成</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 模式3：常见ID生成 -->
+    <div id="commonMode" class="mode-section">
+        <h3>常见ID生成</h3>
+        <form id="commonForm" class="form-horizontal">
+            <div class="form-group">
+                <label for="idType" class="col-sm-2 control-label">ID类型：</label>
+                <div class="col-sm-4">
+                    <select id="idType" class="form-control">
+                        <option value="UUID">UUID（标准格式）</option>
+                        <option value="UUID_WITHOUT_DASH">UUID（无横线）</option>
+                        <option value="SNOWFLAKE">雪花算法（数字）</option>
+                        <option value="SNOWFLAKE_STRING">雪花算法（字符串）</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="commonCount" class="col-sm-2 control-label">生成数量：</label>
+                <div class="col-sm-4">
+                    <input type="number" class="form-control" id="commonCount" placeholder="请输入生成数量" value="10" min="1" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-2 col-sm-4">
+                    <button type="submit" class="btn btn-primary">生成</button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- 结果显示区域 -->
+    <div id="resultArea" class="result-area" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h4 style="margin: 0;">生成结果：</h4>
+            <button id="copyAllBtn" class="btn btn-sm btn-success copy-all-btn">复制所有</button>
+        </div>
+        <div id="resultContent"></div>
+    </div>
+</div>
 
 <script th:src="@{/jquery/dist/jquery.min.js}"></script>
 <script th:src="@{/js/bootstrap.min.js}"></script>
+<script>
+    $(document).ready(function() {
+        // 模式切换
+        $('#modeSelect').change(function() {
+            var mode = $(this).val();
+            $('.mode-section').removeClass('active');
+            $('#' + mode + 'Mode').addClass('active');
+            $('#resultArea').hide();
+        });
+
+        // 初始化显示第一个模式
+        $('#modeSelect').trigger('change');
+
+        // 递增ID生成表单提交
+        $('#incrementalForm').submit(function(e) {
+            e.preventDefault();
+            var startId = $('#startId').val();
+            var count = $('#incrementalCount').val();
+            
+            $.ajax({
+                url: '/generate/incremental',
+                type: 'POST',
+                data: {
+                    startId: startId,
+                    count: count
+                },
+                success: function(data) {
+                    displayResult(data);
+                },
+                error: function(xhr) {
+                    alert('生成失败：' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.responseText));
+                }
+            });
+        });
+
+        // 随机ID生成表单提交
+        $('#randomForm').submit(function(e) {
+            e.preventDefault();
+            var length = $('#length').val();
+            var count = $('#randomCount').val();
+            var type = $('#randomType').val();
+            
+            $.ajax({
+                url: '/generate/random',
+                type: 'POST',
+                data: {
+                    length: length,
+                    count: count,
+                    type: type
+                },
+                success: function(data) {
+                    displayResult(data);
+                },
+                error: function(xhr) {
+                    alert('生成失败：' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.responseText));
+                }
+            });
+        });
+
+        // 常见ID生成表单提交
+        $('#commonForm').submit(function(e) {
+            e.preventDefault();
+            var idType = $('#idType').val();
+            var count = $('#commonCount').val();
+            
+            $.ajax({
+                url: '/generate/common',
+                type: 'POST',
+                data: {
+                    idType: idType,
+                    count: count
+                },
+                success: function(data) {
+                    displayResult(data);
+                },
+                error: function(xhr) {
+                    alert('生成失败：' + (xhr.responseJSON ? xhr.responseJSON.message : xhr.responseText));
+                }
+            });
+        });
+
+        // 显示结果
+        function displayResult(data) {
+            var resultContent = $('#resultContent');
+            resultContent.empty();
+            
+            var idList = [];
+            if (Array.isArray(data)) {
+                data.forEach(function(item, index) {
+                    var idValue = String(item);
+                    idList.push(idValue);
+                    var itemHtml = '<div class="result-item">' +
+                        '<span class="result-index">' + (index + 1) + '</span>' +
+                        '<span class="result-id" onclick="this.select(); document.execCommand(\'copy\');">' + idValue + '</span>' +
+                        '<button class="btn btn-xs btn-default copy-btn" data-id="' + idValue + '">复制</button>' +
+                        '</div>';
+                    resultContent.append(itemHtml);
+                });
+            } else {
+                var idValue = String(data);
+                idList.push(idValue);
+                resultContent.append('<div class="result-item">' +
+                    '<span class="result-id" onclick="this.select(); document.execCommand(\'copy\');">' + idValue + '</span>' +
+                    '<button class="btn btn-xs btn-default copy-btn" data-id="' + idValue + '">复制</button>' +
+                    '</div>');
+            }
+            
+            // 存储ID列表用于复制所有
+            resultContent.data('idList', idList);
+            
+            // 单个复制按钮事件
+            $(document).off('click', '.copy-btn').on('click', '.copy-btn', function() {
+                var id = $(this).data('id');
+                copyToClipboard(id);
+                var $btn = $(this);
+                var originalText = $btn.text();
+                $btn.text('已复制').removeClass('btn-default').addClass('btn-success');
+                setTimeout(function() {
+                    $btn.text(originalText).removeClass('btn-success').addClass('btn-default');
+                }, 1000);
+            });
+            
+            $('#resultArea').show();
+        }
+        
+        // 复制所有按钮事件
+        $(document).on('click', '#copyAllBtn', function() {
+            var idList = $('#resultContent').data('idList');
+            if (idList && idList.length > 0) {
+                var text = idList.join('\n');
+                copyToClipboard(text);
+                var $btn = $(this);
+                var originalText = $btn.text();
+                $btn.text('已复制').removeClass('btn-success').addClass('btn-info');
+                setTimeout(function() {
+                    $btn.text(originalText).removeClass('btn-info').addClass('btn-success');
+                }, 1000);
+            }
+        });
+        
+        // 复制到剪贴板
+        function copyToClipboard(text) {
+            var textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+            } catch (err) {
+                console.error('复制失败:', err);
+            }
+            document.body.removeChild(textarea);
+        }
+    });
+</script>
 </body>
 </html>
