@@ -1,0 +1,40 @@
+# Git相关
+.git
+.gitignore
+.gitattributes
+
+# IDE相关
+.idea
+.vscode
+*.iml
+*.ipr
+*.iws
+.project
+.classpath
+.settings
+
+# Maven相关
+target/
+.mvn/
+mvnw
+mvnw.cmd
+
+# 测试相关
+*.test
+*.log
+
+# 文档
+README.md
+*.md
+
+# Docker相关
+Dockerfile
+.dockerignore
+docker-compose.yml
+
+# 其他
+.DS_Store
+*.swp
+*.swo
+*~
+

@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  generator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: id-generator
+    image: xxmymxue/id-generator:latest
+    ports:
+      - "9099:9099"
+    environment:
+      - JAVA_OPTS=-Xms256m -Xmx512m
+    # restart: unless-stopped
+    # healthcheck 可选，如果需要可以取消注释并安装相应工具
+    # healthcheck:
+    #   test: ["CMD-SHELL", "netstat -an | grep 9099 || exit 1"]
+    #   interval: 30s
+    #   timeout: 10s
+    #   retries: 3
+    #   start_period: 40s
+
